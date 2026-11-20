@@ -40,8 +40,8 @@ public class MovieManager {
 //        Map<Integer,List<Movie>> movies = catalogo.stream()
 //                .collect(Collectors.groupingBy(
 //                        m -> m.getYear()
-//                ));
+//                )).forEach((Movie m) -> System.out.println(m.getImage_url()));
 //
-//        movies.forEach((Movie m) -> m.getImage_url());
+//        movies.forEach((Movie m) -> System.out.println(m.getImage_url()));
 //    }
 }
