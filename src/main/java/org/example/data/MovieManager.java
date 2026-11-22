@@ -1,9 +1,8 @@
 package org.example.data;
 
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,4 +43,43 @@ public class MovieManager {
 //
 //        movies.forEach((Movie m) -> System.out.println(m.getImage_url()));
 //    }
+
+    public void movieForId(int id){
+
+        catalogo.stream()
+                .filter(m -> m.getId() == id)
+                .forEach(m -> System.out.println(id + ": " + m.getTitle()));
+    }
+
+    public void skipLongest(int salto){
+
+        catalogo.stream()
+                .skip(salto)
+                .sorted((a,b) ->  b.getTitle().length() - a.getTitle().length())
+                .limit(1)
+                .forEach(m -> System.out.println(m.getTitle()));
+    }
+
+    public Map<String, Long> movieForGenre(){
+
+
+        return catalogo.stream()
+                .flatMap(m -> Arrays.stream(m.getGenre()))
+                .toList()
+                .stream().collect(Collectors
+                .groupingBy(Function.identity(),Collectors.counting()));
+
+    }
+
+        public Map<String, Double> rankingForGenre(){
+
+
+            return catalogo.stream()
+                    .flatMap(m -> Arrays.stream(m.getGenre())
+                            .map(g -> Map.entry(g, m.getStars())))
+                    .collect(Collectors.groupingBy(
+                            Map.Entry::getKey,
+                            Collectors.averagingDouble(entry -> entry.getValue())
+                    ));
+        }
 }
