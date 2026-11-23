@@ -1,6 +1,7 @@
 package org.example.data;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -12,8 +13,17 @@ public class MovieManager {
 
     static {
         try {
-            catalogo = MovieAPI.obtenerPeliculas();
-        } catch (IOException  | InterruptedException e) {
+//            catalogo =  MovieAPI.obtenerPeliculas();
+//            Set<Movie> catalogoSinDuplicados = new HashSet<>(catalogo);
+//            catalogoSinDuplicados.addAll(MovieCsv.cargar(Path.of("movies_300.csv")));
+//            catalogo = new ArrayList<>(catalogoSinDuplicados);
+
+            catalogo = new ArrayList<>(MovieCsv.cargar(Path.of("movies_300.csv")));
+            MovieAPI.obtenerPeliculas().stream()
+                    .filter(m -> !catalogo.contains(m))
+                    .forEach(m -> catalogo.add(m));
+
+        } catch (IOException | InterruptedException e) {
             System.err.println("Fallo en la API" + e);
         }
     }
@@ -33,53 +43,95 @@ public class MovieManager {
                 .forEach(m -> System.out.println(m.getTitle() + "---" + m.getStars()));
     }
 
-//    public String[] moviesForYears(){
-//
-//
-//        Map<Integer,List<Movie>> movies = catalogo.stream()
-//                .collect(Collectors.groupingBy(
-//                        m -> m.getYear()
-//                )).forEach((Movie m) -> System.out.println(m.getImage_url()));
-//
-//        movies.forEach((Movie m) -> System.out.println(m.getImage_url()));
-//    }
+    public List<Movie> moviesForYear(int year){
 
-    public void movieForId(int id){
-
-        catalogo.stream()
-                .filter(m -> m.getId() == id)
-                .forEach(m -> System.out.println(id + ": " + m.getTitle()));
+        return catalogo.stream()
+                .filter(m -> m.getYear() == year)
+                .collect(Collectors.toList());
     }
 
-    public void skipLongest(int salto){
+    public String[] getImages(List<Movie> movies){
 
-        catalogo.stream()
+        return movies.stream()
+                .map(m -> m.getImage_url())
+                //.toArray()    Array de Object
+                .toArray(String[]::new);
+    }
+
+    public String[] getImages(int year){
+
+        return getImages(moviesForYear(year));
+    }
+
+    public List<Movie> movieForId(int id){
+
+        return catalogo.stream()
+                .filter(m -> m.getId() == id)
+                .toList();
+    }
+
+    public void printMovies(List<Movie> movies){
+        movies.forEach(System.out::println);
+    }
+
+    public int skipLongTitle(int salto){
+
+        return catalogo.stream()
                 .skip(salto)
-                .sorted((a,b) ->  b.getTitle().length() - a.getTitle().length())
-                .limit(1)
-                .forEach(m -> System.out.println(m.getTitle()));
+                .mapToInt(m -> m.getTitle().trim().length())
+                .max()
+                .orElse(0);
+    }
+
+    public boolean limitAndEvaluate(int limite, double stars){
+
+        return catalogo.stream()
+                .limit(limite)
+                .allMatch(m -> m.getStars() >= stars);
     }
 
     public Map<String, Long> movieForGenre(){
 
-
         return catalogo.stream()
                 .flatMap(m -> Arrays.stream(m.getGenre()))
-                .toList()
-                .stream().collect(Collectors
+                .collect(Collectors
                 .groupingBy(Function.identity(),Collectors.counting()));
-
     }
 
-        public Map<String, Double> rankingForGenre(){
+    public Map<String, Double> rankingForGenre(){
 
-
-            return catalogo.stream()
+        return catalogo.stream()
                     .flatMap(m -> Arrays.stream(m.getGenre())
-                            .map(g -> Map.entry(g, m.getStars())))
+                                .map(g -> Map
+                                        .entry(g, m.getStars()))
+                    )
                     .collect(Collectors.groupingBy(
                             Map.Entry::getKey,
                             Collectors.averagingDouble(entry -> entry.getValue())
                     ));
-        }
+    }
+
+    public void showYearMostMovie(){
+        Map.Entry<Integer,Long> obj = getYearMostMovie();
+        System.out.println(obj.getKey() + " : " + obj.getValue());
+    }
+
+    public Map.Entry<Integer,Long> getYearMostMovie(){
+
+        return catalogo.stream()
+                .collect(Collectors.groupingBy(Movie::getYear,
+                        Collectors.counting()))
+                .entrySet()
+                .stream()
+//              .max((x,y) -> (int) (x.getValue() - y.getValue()))
+                .max(Map.Entry.comparingByValue())
+                .get();
+    }
+
+    public Map<Boolean,List<Movie>> reviewMovies(double nota){
+
+        return catalogo.stream()
+                .collect(Collectors
+                        .partitioningBy(m -> m.getStars() >= nota));
+    }
 }
