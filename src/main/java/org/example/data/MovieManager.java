@@ -1,5 +1,6 @@
 package org.example.data;
 
+import org.example.data.error.TresholdExcepcion;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -24,7 +25,7 @@ public class MovieManager {
                     .forEach(m -> catalogo.add(m));
 
         } catch (IOException | InterruptedException e) {
-            System.err.println("Fallo en la API" + e);
+            System.err.println("Fallo en la API " + e);
         }
     }
 
@@ -75,6 +76,9 @@ public class MovieManager {
     }
 
     public int skipLongTitle(int salto){
+        if (salto >= TresholdExcepcion.MAXIMUMSIZE || salto < TresholdExcepcion.MINIMUMSIZE){
+            throw new TresholdExcepcion();
+        }
 
         return catalogo.stream()
                 .skip(salto)
@@ -84,6 +88,9 @@ public class MovieManager {
     }
 
     public boolean limitAndEvaluate(int limite, double stars){
+        if (limite >= TresholdExcepcion.MAXIMUMSIZE || limite < TresholdExcepcion.MINIMUMSIZE){
+            throw new TresholdExcepcion();
+        }
 
         return catalogo.stream()
                 .limit(limite)
